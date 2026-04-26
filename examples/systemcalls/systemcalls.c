@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include<stdlib.h>
+#include <sys/types.h>   
+#include <sys/wait.h>    
+#include <unistd.h>      
+#include <fcntl.h>       
 
 /**
  * @param cmd the command to execute with system()
@@ -10,14 +15,14 @@
 bool do_system(const char *cmd)
 {
 
-/*
- * TODO  add your code here
- *  Call the system() function with the command set in the cmd
- *   and return a boolean true if the system() call completed with success
- *   or false() if it returned a failure
-*/
+    int returnCode = system(cmd);
 
-    return true;
+    if (returnCode == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 /**
@@ -59,6 +64,31 @@ bool do_exec(int count, ...)
  *
 */
 
+    if(command[0][0] != '/'){
+        va_end(args);
+        return false;    // not an absolute path — reject immediately
+    }
+
+    pid_t pid = fork();          
+
+    if(pid == -1){
+        return false;            
+    }
+    else if(pid == 0){
+        // inside child process
+        execv(command[0], command);  
+        return false;              
+    }
+    else {
+        // inside parent process
+        int status;
+        waitpid(pid, &status, 0);    
+
+        if(WIFEXITED(status) && WEXITSTATUS(status) == 0){
+            return true;             
+        }
+        return false;              
+    }
     va_end(args);
 
     return true;
@@ -93,6 +123,33 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
 
+    if(command[0][0] != '/'){
+        va_end(args);
+        return false;    // not an absolute path — reject immediately
+    }
+    pid_t pid = fork();         
+
+    if(pid == -1){
+        return false;           
+    }
+    else if(pid == 0){
+       
+        int fd = open(outputfile, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+        dup2(fd, STDOUT_FILENO);   // replace stdout with file
+        close(fd);
+        execv(command[0], command);  // run the command
+        return false;                
+    }
+    else {
+       
+        int status;
+        waitpid(pid, &status, 0);   
+
+        if(WIFEXITED(status) && WEXITSTATUS(status) == 0){
+            return true;             
+        }
+        return false;               
+    }
     va_end(args);
 
     return true;
