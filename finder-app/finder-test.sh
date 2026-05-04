@@ -9,6 +9,7 @@ NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
 username=$(cat conf/username.txt)
+RESFILE=/tmp/assignment-4-result.txt
 
 if [ $# -lt 3 ]
 then
@@ -63,7 +64,7 @@ OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")
 rm -rf /tmp/aeld-data
 
 set +e
-echo ${OUTPUTSTRING} | grep "${MATCHSTR}"
+echo ${OUTPUTSTRING} | grep "${MATCHSTR}" > ${RESFILE}
 if [ $? -eq 0 ]; then
 	echo "success"
 	exit 0
